@@ -1,6 +1,7 @@
 # 💡 SMART-KYC-AI Platform
 
 ![SmartKYC Logo](asset/ChatGPT Image Sep 26, 2025, 08_23_58 PM.png)  
+
 **GrackerKYC AI v3.0** — A privacy-first, AI-powered KYC verification system built with FastAPI, SQLite, and blockchain simulation. Designed for financial compliance, fraud detection, and ethical identity verification.
 
 ---
