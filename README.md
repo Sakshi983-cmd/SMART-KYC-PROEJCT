@@ -23,7 +23,7 @@ Designed for financial institutions, fintech startups, and compliance teams seek
 ## 🌐 Live Demo Preview
 
 <div align="center">
-  <img src="assets/smartkyc-demo.jpg" width="600" alt="GrackerKYC AI Screenshot">
+  <img src="assets/smartkyc-demo.png" width="600" alt="SmartKYC Demo Screenshot">
 </div>
 
 ---
