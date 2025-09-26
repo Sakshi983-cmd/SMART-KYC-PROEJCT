@@ -6,7 +6,7 @@
 
 ## 🚀 Demo Preview
 
-![SmartKYC Logo](assets/smart-kyc-logo.jpeg)  
+![SmartKYC Logo](asset/)  
 ![GrackerKYC AI Screenshot](assets/grackerkyc-demo.jpeg)
 
 ---
