@@ -1,61 +1,100 @@
-# SMART-KYC-PROEJCT
-# 🛡️ GrackerKYC AI Platform
+# 💡 SMART-KYC-AI Platform
 
-**Enterprise-Grade KYC Verification with Artificial Intelligence & Blockchain Technology**
+**GrackerKYC AI v3.0** — A privacy-first, AI-powered KYC verification system built with FastAPI, SQLite, and blockchain simulation. Designed for financial compliance, fraud detection, and ethical identity verification.
 
-![GrackerKYC Banner](SMART%20KYC%20DEMO.jpg)
+---
 
-## 📋 Table of Contents
-- [Overview](#-overview)
-- [Features](#-features)
-- [Installation](#-installation)
-- [Quick Start](#-quick-start)
-- [API Documentation](#-api-documentation)
-- [Usage Examples](#-usage-examples)
-- [Project Structure](#-project-structure)
-- [Contributing](#-contributing)
-- [License](#-license)
+## 🚀 Demo Preview
 
-## 🌟 Overview
+![SmartKYC Logo](assets/smart-kyc-logo.jpeg)  
+![GrackerKYC AI Screenshot](assets/grackerkyc-demo.jpeg)
 
-GrackerKYC is a cutting-edge AI-powered KYC (Know Your Customer) verification platform that revolutionizes identity verification processes. By combining advanced AI document analysis with blockchain technology, we provide enterprises with a secure, transparent, and efficient solution for customer onboarding and compliance.
+---
 
-## ✨ Key Features
+## 🧠 Features
 
-### 🤖 AI-Powered Intelligence
-- **Smart Document Analysis**: Automatic extraction and validation of identity documents
-- **Pattern Recognition**: Advanced regex-based data extraction from various document types
-- **Risk Assessment**: Real-time fraud detection and risk scoring
-- **Confidence Scoring**: AI-driven verification confidence metrics
+- ✅ **AI-Powered Document Analysis** using regex and NLP  
+- 🔐 **Blockchain Audit Trail** for tamper-proof verification logs  
+- 📊 **Risk Scoring Engine** with confidence levels and fraud indicators  
+- 🧾 **Smart Extraction** of Name, DOB, Document Number, Expiry  
+- 🧠 **No Ollama Required** — lightweight, local AI logic  
+- 🗃️ **SQLite Storage** for fast, secure data handling  
+- 🌐 **FastAPI Backend** with CORS-enabled endpoints  
+- 📈 **Dashboard-ready APIs** for frontend integration  
 
-### ⛓️ Blockchain Security
-- **Immutable Audit Trail**: Every verification recorded on blockchain
-- **Tamper-Proof Records**: Cryptographic hashing ensures data integrity
-- **Transparent History**: Complete verification history accessible anytime
+---
 
-### 📊 Enterprise Dashboard
-- **Real-time Analytics**: Live monitoring of verification processes
-- **Visual Reports**: Interactive charts and performance metrics
-- **Status Tracking**: Real-time updates on verification status
+## 📂 Project Structure
 
-### 📄 Multi-Document Support
-- Passport Verification
-- National ID Cards
-- Aadhaar Cards (India)
-- PAN Cards (India)
-- Driver's Licenses
-
-## 🚀 Installation
-
-### Prerequisites
-- Python 3.8 or higher
-- pip package manager
-- Modern web browser
-
-### Step-by-Step Setup
-
-1. **Clone or Download the Project**
 ```bash
-# Create project directory
-mkdir gracker-kyc
-cd gracker-kyc
+├── backend.py          # FastAPI server with AI + Blockchain logic
+├── frontend.py         # Optional UI integration (React/Streamlit)
+├── gracker_kyc.db      # SQLite database for KYC records
+├── requirements.txt    # Python dependencies
+├── assets/             # Logo, screenshots, and demo images
+└── README.md           # You're reading it!
+```
+
+---
+
+## 🔧 Installation
+
+```bash
+# Clone the repo
+git clone https://github.com/Sakshi983-cmd/SMART-KYC-AI.git
+cd SMART-KYC-AI
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the backend
+uvicorn backend:app --reload
+```
+
+---
+
+## 📡 API Endpoints
+
+| Method | Endpoint                  | Description                          |
+|--------|---------------------------|--------------------------------------|
+| GET    | `/`                       | Health check                         |
+| POST   | `/api/v1/verify`          | Submit KYC document for analysis     |
+| GET    | `/api/v1/blockchain`      | View blockchain audit trail          |
+| GET    | `/api/v1/verifications`   | Fetch recent KYC verification logs   |
+
+---
+
+## 🧪 Sample Request
+
+```json
+POST /api/v1/verify
+{
+  "name": "Test User",
+  "email": "test.user@example.com",
+  "document_text": "Name: Test User\nDOB: 01/01/1990\nNumber: 123456789012",
+  "document_type": "Aadhaar Card"
+}
+```
+
+---
+
+## 🛡️ Risk Scoring Logic
+
+- **Low Risk** → Confidence ≥ 80 + Valid expiry + Name match  
+- **Medium Risk** → Confidence ≥ 60 + Minor issues  
+- **High Risk** → Missing fields or mismatched data  
+
+---
+
+## 🧘 Vision
+
+This project is part of a larger mission to build ethical, privacy-safe AI systems for financial inclusion and karmic justice. Built by **Sakshi Tiwari** — a resilient engineer blending tech, empathy, and spiritual wisdom.
+
+---
+
+## 📬 Contact
+
+For collaboration, feedback, or demo requests:  
+**Email**: sakshi983.cmd@gmail.com  
+**GitHub**: [Sakshi983-cmd](https://github.com/Sakshi983-cmd)
+
