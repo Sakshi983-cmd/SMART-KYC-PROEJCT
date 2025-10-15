@@ -73,19 +73,15 @@ class KYCRequest(BaseModel):
 class AIAnalysis:
     @staticmethod
     def analyze_document(document_text: str, user_name: str):
-        """Smart document analysis without Ollama"""
-        
-        # Extract information using regex patterns
-        extracted_name = re.search(r'Name[:\s]*([^\n]+)', document_text, re.IGNORECASE)
-        dob = re.search(r'(DOB|Date of Birth)[:\s]*([^\n]+)', document_text, re.IGNORECASE)
-        doc_number = re.search(r'(Number|No)[:\s]*([^\n]+)', document_text, re.IGNORECASE)
-        expiry = re.search(r'(Expiry|Valid|Date)[:\s]*([^\n]+)', document_text, re.IGNORECASE)
-        
-        # Basic validation
+        # Flexible regex patterns
+        extracted_name = re.search(r'Name\s*[:\-]?\s*([^\n]+)', document_text, re.IGNORECASE)
+        dob = re.search(r'(DOB|Date of Birth)\s*[:\-]?\s*([^\n]+)', document_text, re.IGNORECASE)
+        doc_number = re.search(r'(Number|No)\s*[:\-]?\s*([^\n]+)', document_text, re.IGNORECASE)
+        expiry = re.search(r'(Expiry|Valid|Date)\s*[:\-]?\s*([^\n]+)', document_text, re.IGNORECASE)
+
         name_match = extracted_name and user_name.lower() in extracted_name.group(1).lower()
         is_valid = bool(extracted_name and doc_number)
-        
-        # Risk analysis
+
         issues = []
         if not name_match:
             issues.append("Name mismatch detected")
@@ -93,10 +89,10 @@ class AIAnalysis:
             issues.append("Date of birth missing")
         if not expiry:
             issues.append("Expiry date missing")
-            
+
         risk_level = "high" if len(issues) > 2 else "medium" if len(issues) > 0 else "low"
         confidence = 90 if is_valid and risk_level == "low" else 60 if is_valid else 30
-        
+
         return {
             "extraction": {
                 "full_name": extracted_name.group(1) if extracted_name else "Not found",
@@ -130,10 +126,8 @@ def root():
 @app.post("/api/v1/verify")
 async def verify_kyc(request: KYCRequest):
     try:
-        # AI Analysis
         ai_result = AIAnalysis.analyze_document(request.document_text, request.name)
-        
-        # Blockchain Integration
+
         block_data = {
             "user": request.name,
             "email": request.email,
@@ -141,46 +135,49 @@ async def verify_kyc(request: KYCRequest):
             "timestamp": datetime.now().isoformat(),
             "ai_confidence": ai_result.get('validation', {}).get('confidence', 0)
         }
-        
+
         blockchain_hash = blockchain.add_block(block_data)
-        
-        # Determine Status
+
         validation = ai_result.get('validation', {})
         risk_analysis = ai_result.get('risk_analysis', {})
-        
+
         confidence = validation.get('confidence', 0)
         risk_level = risk_analysis.get('risk_level', 'high')
-        
+
         if confidence >= 80 and risk_level == 'low':
             status = "APPROVED"
         elif confidence >= 60:
             status = "UNDER_REVIEW"
         else:
             status = "REJECTED"
-        
-        # Store in Database
+
         timestamp = datetime.now().isoformat()
-        c = conn.cursor()
-        c.execute('''INSERT INTO kyc_verifications 
-                    (user_id, name, email, doc_type, doc_data, blockchain_hash, 
-                     timestamp, status, ai_confidence, risk_level, issues, suggestions) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                  (
-                      hashlib.md5(request.email.encode()).hexdigest()[:8],
-                      request.name,
-                      request.email,
-                      request.document_type,
-                      json.dumps(ai_result),
-                      blockchain_hash,
-                      timestamp,
-                      status,
-                      confidence,
-                      risk_level,
-                      json.dumps(risk_analysis.get('issues', [])),
-                      json.dumps(ai_result.get('recommendations', {}).get('suggestions', []))
-                  ))
-        conn.commit()
-        
+        user_id = hashlib.md5(request.email.encode()).hexdigest()[:8]
+
+        try:
+            c = conn.cursor()
+            c.execute('''INSERT INTO kyc_verifications 
+                        (user_id, name, email, doc_type, doc_data, blockchain_hash, 
+                         timestamp, status, ai_confidence, risk_level, issues, suggestions) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                      (
+                          user_id,
+                          request.name,
+                          request.email,
+                          request.document_type,
+                          json.dumps(ai_result),
+                          blockchain_hash,
+                          timestamp,
+                          status,
+                          confidence,
+                          risk_level,
+                          json.dumps(risk_analysis.get('issues', [])),
+                          json.dumps(ai_result.get('recommendations', {}).get('suggestions', []))
+                      ))
+            conn.commit()
+        except Exception as db_error:
+            print("Database insert error:", db_error)
+
         return {
             "success": True,
             "verification_id": blockchain_hash[:16],
@@ -192,8 +189,9 @@ async def verify_kyc(request: KYCRequest):
             "ai_analysis": ai_result,
             "blockchain_index": len(blockchain.chain) - 1
         }
-    
+
     except Exception as e:
+        print("Error in /verify:", e)
         return {
             "success": False,
             "error": str(e),
@@ -218,7 +216,7 @@ def get_verifications():
     c = conn.cursor()
     c.execute("SELECT * FROM kyc_verifications ORDER BY timestamp DESC LIMIT 50")
     records = c.fetchall()
-    
+
     columns = [col[0] for col in c.description]
     result = []
     for row in records:
@@ -230,7 +228,7 @@ def get_verifications():
         if record.get('suggestions'):
             record['suggestions'] = json.loads(record['suggestions'])
         result.append(record)
-    
+
     return {"verifications": result}
 
 if __name__ == "__main__":
