@@ -3,7 +3,6 @@ import requests
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
-import time
 
 st.set_page_config(
     page_title="GrackerKYC AI Platform",
@@ -12,35 +11,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
-<style>
-/* (Your existing CSS here, unchanged) */
-</style>
-""", unsafe_allow_html=True)
-
-API_BASE = "http://127.0.0.1:8000/api/v1"
+API_BASE = st.secrets.get("API_BASE", "http://127.0.0.1:8000/api/v1")
 
 def make_request(endpoint, method="GET", data=None):
     try:
         url = f"{API_BASE}/{endpoint}"
-        if method == "GET":
-            response = requests.get(url)
-        else:
-            response = requests.post(url, json=data)
+        response = requests.get(url) if method == "GET" else requests.post(url, json=data)
         if response.status_code == 200:
             return response.json()
         else:
-            st.error(f"❌ Backend returned status {response.status_code} for endpoint '{endpoint}'")
+            st.error(f"❌ Backend returned status {response.status_code} for '{endpoint}'")
             return None
     except requests.exceptions.ConnectionError:
-        st.error(f"🔴 Could not connect to backend at {API_BASE}. Make sure it's running.")
+        st.error(f"🔴 Could not connect to backend at {API_BASE}. Is it running?")
         return None
 
 def main():
     st.markdown('<h1 class="main-header">GrackerKYC AI Platform</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Enterprise-Grade KYC Verification with AI & Blockchain</p>', unsafe_allow_html=True)
-    
-    # Check backend by calling verifications endpoint
+
     test = make_request("verifications")
     if test is None:
         st.warning("Backend API not running. Start with: python backend.py")
@@ -64,31 +53,33 @@ def main():
                     if all([name, email, doc_text]):
                         with st.spinner("AI is analyzing document..."):
                             result = make_request("verify", "POST", {
-                                "name": name, "email": email, 
+                                "name": name, "email": email,
                                 "document_text": doc_text, "document_type": doc_type
                             })
-                            if result and result.get("success"):
+                            if result is None:
+                                st.error("❌ No response from backend.")
+                            elif not result.get("success"):
+                                st.error(f"Verification failed: {result.get('message', 'Unknown error')}")
+                            else:
                                 st.session_state.last_result = result
                                 st.success("✅ Verification Complete!")
-                            else:
-                                st.error("Verification failed")
                     else:
                         st.warning("Please fill all fields")
 
         with col2:
             if 'last_result' in st.session_state:
                 result = st.session_state.last_result
-                ai_data = result.get("ai_analysis", {})
+                ai_data = result.get("ai_analysis") or {}
                 status = result.get("status", "UNKNOWN")
-                status_color = "approved" if status=="APPROVED" else "review" if status=="UNDER_REVIEW" else "rejected"
+                status_color = "approved" if status == "APPROVED" else "review" if status == "UNDER_REVIEW" else "rejected"
                 st.markdown(f'<div class="metric-card {status_color}">', unsafe_allow_html=True)
                 st.metric("Verification Status", status, f"{result.get('confidence_score', 0)}% Confidence")
                 st.markdown('</div>', unsafe_allow_html=True)
 
                 st.subheader("🤖 AI Analysis Results")
-                extraction = ai_data.get('extraction', {})
-                validation = ai_data.get('validation', {})
-                risk_analysis = ai_data.get('risk_analysis', {})
+                extraction = ai_data.get("extraction") or {}
+                validation = ai_data.get("validation") or {}
+                risk_analysis = ai_data.get("risk_analysis") or {}
 
                 col_a, col_b = st.columns(2)
                 with col_a:
@@ -109,6 +100,8 @@ def main():
                             '</div>', unsafe_allow_html=True)
                 st.write(f"Block Hash: `{result.get('blockchain_hash', '')[:30]}...`")
                 st.write(f"Block Index: #{result.get('blockchain_index', 0)}")
+            else:
+                st.info("No recent verification found.")
 
     with tab2:
         st.header("Verifications Dashboard")
@@ -116,11 +109,11 @@ def main():
         if verifications:
             df = pd.DataFrame(verifications.get("verifications", []))
             if not df.empty:
-                st.dataframe(df[['name','email','status','timestamp','ai_confidence']])
+                st.dataframe(df[['name', 'email', 'status', 'timestamp', 'ai_confidence']])
                 col1, col2, col3, col4 = st.columns(4)
-                with col1: st.metric("Approved", len(df[df['status']=='APPROVED']))
-                with col2: st.metric("Under Review", len(df[df['status']=='UNDER_REVIEW']))
-                with col3: st.metric("Rejected", len(df[df['status']=='REJECTED']))
+                with col1: st.metric("Approved", len(df[df['status'] == 'APPROVED']))
+                with col2: st.metric("Under Review", len(df[df['status'] == 'UNDER_REVIEW']))
+                with col3: st.metric("Rejected", len(df[df['status'] == 'REJECTED']))
                 with col4: st.metric("Total", len(df))
 
     with tab3:
@@ -137,13 +130,14 @@ def main():
         verifications = make_request("verifications")
         if verifications:
             df = pd.DataFrame(verifications.get("verifications", []))
-            if not df.empty:
+            if not df.empty and 'ai_confidence' in df.columns:
                 fig = px.histogram(df, x='ai_confidence', title='AI Confidence Distribution')
                 st.plotly_chart(fig)
                 status_counts = df['status'].value_counts()
                 fig = px.pie(values=status_counts.values, names=status_counts.index, title='Verification Status Distribution')
                 st.plotly_chart(fig)
+            else:
+                st.info("No data available for analytics.")
 
 if __name__ == "__main__":
     main()
-
